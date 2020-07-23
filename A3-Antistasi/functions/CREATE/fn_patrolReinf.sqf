@@ -61,12 +61,10 @@ if (_land) then
 			[_x] call A3A_fnc_NATOinit;
 		};
 	} forEach units _groupX;
-	[_veh] call A3A_fnc_AIVEHinit;
+	[_veh, _sideX] call A3A_fnc_AIVEHinit;
 	[_veh,"Inf Truck."] spawn A3A_fnc_inmuneConvoy;
 	_groupX spawn A3A_fnc_attackDrillAI;
 	[_mrkOrigin,_posDestination,_groupX] call A3A_fnc_WPCreate;
-	_Vwp0 = (wayPoints _groupX) select 0;
-	_Vwp0 setWaypointBehaviour "SAFE";
 	_Vwp0 = _groupX addWaypoint [_posDestination, count (wayPoints _groupX)];
 	_Vwp0 setWaypointType "GETOUT";
 	_Vwp0 setWaypointStatements ["true","nul = [(thisList select {alive _x}),side this,(group this) getVariable [""reinfMarker"",""""],0] remoteExec [""A3A_fnc_garrisonUpdate"",2];[group this] spawn A3A_fnc_groupDespawner; reinfPatrols = reinfPatrols - 1; publicVariable ""reinfPatrols"";"];
@@ -94,7 +92,7 @@ else
 		[_x] call A3A_fnc_NATOinit;
 		_x addEventHandler ["Killed",{deleteVehicle (group (_this select 0) getVariable ["myPad",objNull])}];
 	} forEach units _groupVeh;
-	[_veh] call A3A_fnc_AIVEHinit;
+	[_veh, _sideX] call A3A_fnc_AIVEHinit;
 
 	_groupX = [_posOrigin,_sideX,_typeGroup] call A3A_fnc_spawnGroup;
 	{

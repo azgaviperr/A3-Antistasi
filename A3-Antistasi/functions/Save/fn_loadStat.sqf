@@ -49,7 +49,7 @@ if (_varName in specialVarLoads) then {
 	if (_varName == 'bombRuns') then {bombRuns = _varValue; publicVariable "bombRuns"};
 	if (_varName == 'nextTick') then {nextTick = time + _varValue};
 	if (_varName == 'membersX') then {membersX = +_varValue; publicVariable "membersX"};
-	if (_varName == 'smallCAmrk') then {smallCAmrk = +_varValue};
+	if (_varName == 'smallCAmrk') then {};		// Ignore. These are not persistent.
 	if (_varName == 'mrkNATO') then {{sidesX setVariable [_x,Occupants,true]} forEach _varValue;};
 	if (_varName == 'mrkCSAT') then {{sidesX setVariable [_x,Invaders,true]} forEach _varValue;};
 	if (_varName == 'mrkSDK') then {{sidesX setVariable [_x,teamPlayer,true]} forEach _varValue;};
@@ -67,11 +67,13 @@ if (_varName in specialVarLoads) then {
     {
         aggressionLevelOccupants = _varValue select 0;
         aggressionStackOccupants = +(_varValue select 1);
+        [true] spawn A3A_fnc_calculateAggression;
     };
     if (_varName == 'aggressionInvaders') then
     {
         aggressionLevelInvaders = _varValue select 0;
         aggressionStackInvaders = +(_varValue select 1);
+        [true] spawn A3A_fnc_calculateAggression;
     };
 	if (_varName == 'hr') then {server setVariable ["HR",_varValue,true]};
 	if (_varName == 'dateX') then {setDate _varValue};
@@ -97,21 +99,23 @@ if (_varName in specialVarLoads) then {
 	if (_varName == 'maxUnits') then {maxUnits=_varValue; publicVariable "maxUnits"};
 	if (_varName == 'vehInGarage') then {vehInGarage= +_varValue; publicVariable "vehInGarage"};
 	if (_varName == 'destroyedBuildings') then {
-		destroyedBuildings= +_varValue;
-		//publicVariable "destroyedBuildings";
-		private _building = objNull;
 		{
-			_building = nearestObject [_x, "House"];
-			if !(_building in antennas) then {
+			// nearestObject sometimes picks the wrong building and is several times slower
+			// Example: Livonia Land_Cargo_Tower_V2_F at [6366.63,3880.88,0] ATL
+
+			private _building = nearestObjects [_x, ["House"], 1, true] select 0;
+			call {
+				if (isNil "_building") exitWith { diag_log format ["No building found at %1", _x] };
+				if (_building in antennas) exitWith { diag_log "Antenna in destroyed building list, ignoring" };
+
 				private _ruin = [_building] call BIS_fnc_createRuin;
-				//JIP on the _ruin, as repairRuinedBuilding will delete the ruin.
-				if !(isNull _ruin) then {
-					[_building, true] remoteExec ["hideObject", 0, _ruin];
-				} else {
+				if (isNull _ruin) exitWith {
 					diag_log format ["Loading Destroyed Buildings: Unable to create ruin for %1", typeOf _building];
 				};
+
+				destroyedBuildings pushBack _building;
 			};
-		} forEach destroyedBuildings;
+		} forEach _varValue;
 	};
 	if (_varName == 'minesX') then {
 		for "_i" from 0 to (count _varvalue) - 1 do {
@@ -272,10 +276,13 @@ if (_varName in specialVarLoads) then {
 				_veh setPosATL _posVeh;
 				_veh setVectorDirAndUp [_xVectorDir,_xVectorUp];
 			};
+			[_veh, teamPlayer] call A3A_fnc_AIVEHinit;
 			if ((_veh isKindOf "StaticWeapon") or (_veh isKindOf "Building")) then {
 				staticsToSave pushBack _veh;
+			}
+			else {
+				[_veh] spawn A3A_fnc_vehDespawner;
 			};
-			[_veh] call A3A_fnc_AIVEHinit;
 		};
 		publicVariable "staticsToSave";
 	};

@@ -9,6 +9,18 @@ if (isNil "logLevel") then { logLevel = 2 };scriptName "initClient.sqf";
 
 call A3A_fnc_installSchrodingersBuildingFix;
 
+if (!isServer) then {
+	// get server to send us the current destroyedBuildings list, hide them locally
+	"destroyedBuildings" addPublicVariableEventHandler {
+		{ hideObject _x } forEach (_this select 1);
+	};
+	// need to wait until server has loaded the save
+	[] spawn {
+		waitUntil {(!isNil "serverInitDone")};
+		[clientOwner, "destroyedBuildings"] remoteExecCall ["publicVariableClient", 2];
+	};
+};
+
 if (hasInterface) then {
 	waitUntil {!isNull player};
 	waitUntil {player == player};
@@ -21,6 +33,7 @@ if (!isServer) then {
 	call A3A_fnc_initVar;
 	if (!hasInterface) exitWith {
 		[2,format ["Headless client version: %1",localize "STR_antistasi_credits_generic_version_text"],_fileName] call A3A_fnc_log;
+		call A3A_fnc_loadNavGrid;
 		[clientOwner] remoteExec ["A3A_fnc_addHC",2];
 	};
 	[2,format ["MP client version: %1",localize "STR_antistasi_credits_generic_version_text"],_fileName] call A3A_fnc_log;
@@ -49,27 +62,6 @@ if (isMultiplayer) then {
 		[] execVM "orgPlayers\radioJam.sqf";
 	};
 	tkPunish = if ("tkPunish" call BIS_fnc_getParamValue == 1) then {true} else {false};
-	if (side player == teamPlayer) then {
-		private _firedHandlerTk = {
-			_typeX = _this select 1;
-			if ((_typeX == "Put") or (_typeX == "Throw")) then {
-				private _shieldDistance = 100;
-				if (player distance petros < _shieldDistance) then {
-					["Warning", format ["You cannot throw grenades or place explosives within %1m of base.", _shieldDistance]] call A3A_fnc_customHint;
-					deleteVehicle (_this select 6);
-					if (_typeX == "Put") then {
-						if (player distance petros < 10) then {
-							[player, 20, 0.34, petros] call A3A_fnc_punishment;
-						};
-					};
-				};
-			};
-		};
-		player addEventHandler ["Fired", _firedHandlerTk];
-		if (hasACE) then {
-			["ace_firedPlayer", _firedHandlerTk ] call CBA_fnc_addEventHandler;
-		};
-	};
 	if (!isNil "placementDone") then {_isJip = true};//workaround for BIS fail on JIP detection
 }
 else {
@@ -89,7 +81,7 @@ else {
 private ["_colourTeamPlayer", "_colorInvaders"];
 _colourTeamPlayer = teamPlayer call BIS_fnc_sideColor;
 _colorInvaders = Invaders call BIS_fnc_sideColor;
-_positionX = if (side player == side (group petros)) then {position petros} else {getMarkerPos "respawn_west"};
+_positionX = if (side player isEqualTo teamPlayer) then {position petros} else {getMarkerPos "respawn_west"};
 
 {
 	_x set [3, 0.33]
@@ -165,12 +157,13 @@ if (player getVariable ["pvp",false]) exitWith {
 	}];
 };
 
-player setVariable ["score",0,true];
+// Placeholders, should get replaced globally by the server
+player setVariable ["score",0];
+player setVariable ["moneyX",0];
+player setVariable ["rankX",rank player];
+
 player setVariable ["owner",player,true];
 player setVariable ["punish",0,true];
-player setVariable ["moneyX",95,true];
-player setUnitRank "PRIVATE";
-player setVariable ["rankX",rank player,true];
 
 stragglers = creategroup teamPlayer;
 (group player) enableAttack false;
@@ -274,30 +267,33 @@ player addEventHandler ["HandleHeal", {
 		};
 	};
 }];
+
+// notes:
+// Static weapon objects are persistent through assembly/disassembly
+// The bags are not persistent, object IDs change each time
+// Static weapon position seems to follow bag1, but it's not an attached object
+// Can use objectParent to identify backpack of static weapon
+
 player addEventHandler ["WeaponAssembled", {
-	private ["_veh"];
-	_veh = _this select 1;
+	private _veh = _this select 1;
+	[_veh, teamPlayer] call A3A_fnc_AIVEHinit;		// will flip/capture if already initialized
 	if (_veh isKindOf "StaticWeapon") then {
 		if (not(_veh in staticsToSave)) then {
 			staticsToSave pushBack _veh;
 			publicVariable "staticsToSave";
-			[_veh] call A3A_fnc_AIVEHinit;
 		};
-	_markersX = markersX select {sidesX getVariable [_x,sideUnknown] == teamPlayer};
-	_pos = position _veh;
-	if (_markersX findIf {_pos inArea _x} != -1) then {["Static Deployed", "Static weapon has been deployed for use in a nearby zone, and will be used by garrison militia if you leave it here the next time the zone spawns"] call A3A_fnc_customHint;};
-	}
-	else {
-		_veh addEventHandler ["Killed",{[_this select 0] remoteExec ["A3A_fnc_postmortem",2]}];
+		_markersX = markersX select {sidesX getVariable [_x,sideUnknown] == teamPlayer};
+		_pos = position _veh;
+		if (_markersX findIf {_pos inArea _x} != -1) then {["Static Deployed", "Static weapon has been deployed for use in a nearby zone, and will be used by garrison militia if you leave it here the next time the zone spawns"] call A3A_fnc_customHint;};
 	};
 }];
 player addEventHandler ["WeaponDisassembled", {
-	_bag1 = _this select 1;
-	_bag2 = _this select 2;
+	private _bag1 = _this select 1;
+	private _bag2 = _this select 2;
 	//_bag1 = objectParent (_this select 1);
 	//_bag2 = objectParent (_this select 2);
-	[_bag1] call A3A_fnc_AIVEHinit;
-	[_bag2] call A3A_fnc_AIVEHinit;
+	[_bag1] remoteExec ["A3A_fnc_postmortem", 2];
+	[_bag2] remoteExec ["A3A_fnc_postmortem", 2];
 }];
 
 player addEventHandler ["GetInMan", {
@@ -432,6 +428,24 @@ gameMenu = (findDisplay 46) displayAddEventHandler ["KeyDown",A3A_fnc_keys];
 
 //if ((!isServer) and (isMultiplayer)) then {boxX call jn_fnc_arsenal_init};
 
+
+if (hasACE) then
+{
+	if (isNil "ace_interact_menu_fnc_compileMenu" || isNil "ace_interact_menu_fnc_compileMenuSelfAction") exitWith {
+		[1, "ACE non-public functions have changed, rebel group join/leave actions will not be removed", _filename] call A3A_fnc_log;
+	};
+	// Remove group join action from all rebel unit types
+	// Need to compile the menus first, because ACE delays creating menus until a unit of that class is created
+	private _playerUnits = ["I_G_soldier_F", "I_G_Soldier_TL_F", "I_G_Soldier_AR_F", "I_G_medic_F", "I_G_engineer_F", "I_G_Soldier_GL_F" /*greenfor*/,
+		"B_G_soldier_F", "B_G_Soldier_TL_F", "B_G_Soldier_AR_F", "B_G_medic_F", "B_G_engineer_F", "B_G_Soldier_GL_F" /*bluefor*/];
+	{
+		[_x] call ace_interact_menu_fnc_compileMenu;
+		[_x] call ace_interact_menu_fnc_compileMenuSelfAction;
+		[_x, 1,["ACE_SelfActions", "ACE_TeamManagement", "ACE_LeaveGroup"]] call ace_interact_menu_fnc_removeActionFromClass;
+		[_x, 0,["ACE_MainActions", "ACE_JoinGroup"]] call ace_interact_menu_fnc_removeActionFromClass;
+	} forEach (_playerUnits + [typePetros, staticCrewTeamPlayer, SDKUnarmed] + SDKSniper + SDKATman + SDKMedic + SDKMG + SDKExp + SDKGL + SDKMil + SDKSL + SDKEng);
+};
+
 boxX allowDamage false;
 boxX addAction ["Transfer Vehicle cargo to Ammobox", {[] spawn A3A_fnc_empty;}, 4];
 boxX addAction ["Move this asset", A3A_fnc_moveHQObject,nil,0,false,true,"","(_this == theBoss)", 4];
@@ -500,8 +514,11 @@ if (isMultiplayer) then {
 else
 {
 	if (loadLastSave) then {
-		[] spawn A3A_fnc_loadPlayer;
+		// just do this directly, because playerHasSave doesn't work without moneyX
+		private _loadout = [getPlayerUID player, "loadoutPlayer"] call A3A_fnc_retrievePlayerStat;
+		if (!isNil "_loadout") then { player setUnitLoadout _loadout };
 	};
+	player setVariable ["canSave", true];
 };
 
 
@@ -513,3 +530,8 @@ player setPos (getMarkerPos respawnTeamPlayer);
 enableEnvironment [false, true];
 
 [2,"initClient completed",_fileName] call A3A_fnc_log;
+
+if(!isMultiplayer) then
+{
+    [] spawn A3A_fnc_singlePlayerBlackScreenWarning;
+};

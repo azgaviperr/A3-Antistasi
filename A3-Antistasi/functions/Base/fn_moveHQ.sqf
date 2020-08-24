@@ -40,7 +40,7 @@ fireX inflame false;
 [respawnTeamPlayer, 0, teamPlayer] call A3A_fnc_setMarkerAlphaForSide;
 [respawnTeamPlayer, 0, civilian] call A3A_fnc_setMarkerAlphaForSide;
 
-_garrison = garrison getVariable ["Synd_HQ", []];
+["Synd_HQ", teamPlayer] call A3A_fnc_clearGarrison;
 _positionX = getMarkerPos "Synd_HQ";
 if (count _garrison > 0) then
 	{
@@ -54,7 +54,7 @@ if (count _garrison > 0) then
 		{
 		_size = ["Synd_HQ"] call A3A_fnc_sizeMarker;
 		{
-		if ((side group _x == teamPlayer) and (not(_x getVariable ["spawner",false])) and (_x distance _positionX < _size) and (_x != petros)) then
+		if ((side group _x == teamPlayer) and (_x distance _positionX < _size) and (_x != petros)) then
 			{
 			if (!alive _x) then
 				{
@@ -76,7 +76,7 @@ if (count _garrison > 0) then
 	_costs = _costs + (server getVariable _x);
 	} forEach _garrison;
 	[_hr,_costs] remoteExec ["A3A_fnc_resourcesFIA",2];
-	garrison setVariable ["Synd_HQ",[],true];
+    ["Synd_HQ", teamPlayer] call A3A_fnc_clearGarrison;
 	["Garrison", format ["Garrison removed<br/><br/>Recovered Money: %1 €<br/>Recovered HR: %2",_costs,_hr]] call A3A_fnc_customHint;
 	};
 

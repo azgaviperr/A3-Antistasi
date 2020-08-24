@@ -69,7 +69,7 @@ while {true} do
 		[[10, 60], [0, 0]] remoteExec ["A3A_fnc_prestige",2];
 		_mrkD = format ["Dum%1",_city];
 		_mrkD setMarkerColor colorTeamPlayer;
-		garrison setVariable [_city,[],true];
+        [_mrkD, teamPlayer] call A3A_fnc_clearGarrison;
 		sleep 5;
 		{_nul = [_city,_x] spawn A3A_fnc_deleteControls} forEach controlsX;
 		if ((!(["CONVOY"] call BIS_fnc_taskExists)) and (!bigAttackInProgress)) then
@@ -89,7 +89,7 @@ while {true} do
 		[[-10, 45], [0, 0]] remoteExec ["A3A_fnc_prestige",2];
 		_mrkD = format ["Dum%1",_city];
 		_mrkD setMarkerColor colorOccupants;
-		garrison setVariable [_city,[],true];
+        [_city, Occupants] call A3A_fnc_clearGarrison;
 		sleep 5;
 		[] call A3A_fnc_tierCheck;
 		};

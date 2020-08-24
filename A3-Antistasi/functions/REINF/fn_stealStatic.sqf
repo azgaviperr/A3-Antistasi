@@ -1,31 +1,37 @@
-private ["_staticX","_nearX","_playerX"];
+params ["_static", "_player"];
 
-_staticX = _this select 0;
-_playerX = _this select 1;
+if (!alive _static) exitWith
+{
+    ["Steal Static", "You cannot steal a destroyed static weapon"] call A3A_fnc_customHint;
+};
 
-if (!alive _staticX) exitWith {["Steal Static", "You cannot steal a destroyed static weapon"] call A3A_fnc_customHint;};
+if (alive gunner _static) exitWith
+{
+    ["Steal Static", "The gunner of this static weapon is still alive"] call A3A_fnc_customHint;
+};
 
-if (alive gunner _staticX) exitWith {["Steal Static", "You cannot steal a static weapon when someone is using it"] call A3A_fnc_customHint;};
+if (activeGREF && ((typeOf _static == staticATteamPlayer) || (typeOf _static == staticAAteamPlayer))) exitWith
+{
+    ["Steal Static", "This weapon cannot be dissassembled"] call A3A_fnc_customHint;
+};
 
-if ((alive assignedGunner _staticX) and (!isPlayer (assignedGunner _staticX))) exitWith {["Steal Static", "The gunner of this static weapon is still alive"] call A3A_fnc_customHint;};
+private _marker = _static getVariable "StaticMarker";
 
-if (activeGREF and ((typeOf _staticX == staticATteamPlayer) or (typeOf _staticX == staticAAteamPlayer))) exitWith {["Steal Static", "This weapon cannot be dissassembled"] call A3A_fnc_customHint;};
+if (!(sidesX getVariable [_marker,sideUnknown] == teamPlayer)) exitWith
+{
+    ["Steal Static", "You have to conquer this zone in order to be able to steal this Static Weapon"] call A3A_fnc_customHint;
+};
 
-_nearX = [markersX,_staticX] call BIS_fnc_nearestPosition;
-
-if (not(sidesX getVariable [_nearX,sideUnknown] == teamPlayer)) exitWith {["Steal Static", "You have to conquer this zone in order to be able to steal this Static Weapon"] call A3A_fnc_customHint;};
-
-_staticX setOwner (owner _playerX);
-
-private _staticClass =	typeOf _staticX;
+_static setOwner (owner _player);
+private _staticClass =	typeOf _static;
 private _staticComponents = getArray (configFile >> "CfgVehicles" >> _staticClass >> "assembleInfo" >> "dissasembleTo");
 
-deleteVehicle _staticX;
- 
+deleteVehicle _static;
+
 //We need to create the ground weapon holder first, otherwise it won't spawn exactly where we tell it to.
-private _groundWeaponHolder = createVehicle ["GroundWeaponHolder", (getPosATL _playerX), [], 0, "CAN_COLLIDE"];
- 
-for "_i" from 0 to ((count _staticComponents) - 1) do 
+private _groundWeaponHolder = createVehicle ["GroundWeaponHolder", (getPosATL _player), [], 0, "CAN_COLLIDE"];
+
+for "_i" from 0 to ((count _staticComponents) - 1) do
 	{
 		_groundWeaponHolder addBackpackCargoGlobal [(_staticComponents select _i), 1];
 	};

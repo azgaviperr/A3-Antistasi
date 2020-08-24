@@ -1,15 +1,19 @@
 if (!isServer) exitWith {};
+params ["_marker", "_side"];
 
 /*  Checks if the marker should change its owner after a unit died and flips it if need be
-    Execution on: Server
+
     Scope: Internal
+
     Params:
         _marker : STRING : Name of the marker the unit died on
         _side : SIDE : Side of the unit which died
+
     Returns:
         Nothing
 */
-params ["_marker", "_side"];
+
+
 
 if ((isNil "_marker") or (isNil "_side")) exitWith {};
 
@@ -47,13 +51,18 @@ switch (_side) do
 
 [0,0,0] params ["_defenderUnitCount", "_enemy1UnitCount", "_enemy2UnitCount"];
 
-private _markerPos = getMarkerPos _marker;
 {
-    if((_markerPos distance2D _x < 300) && {[_x] call A3A_fnc_canFight}) then
+    if([_x, _marker] call A3A_fnc_canConquer) then
     {
         switch (side (group _x)) do
         {
-            case (_side): {_defenderUnitCount = _defenderUnitCount + 1};
+            case (_side):
+            {
+                if(((_x getVariable ["UnitMarker", ""]) == _marker) || (isPlayer _x)) then
+                {
+                    _defenderUnitCount = _defenderUnitCount + 1
+                };
+            };
             case (_enemy1): {_enemy1UnitCount = _enemy1UnitCount + 1};
             case (_enemy2): {_enemy2UnitCount = _enemy2UnitCount + 1};
         };

@@ -138,6 +138,11 @@ if (isServer) then {
 		["wurzelGarrison"] call A3A_fnc_getStatVariable;
 	};
 
+    tierPreference = 1;
+	publicVariable "tierPreference";
+	//Updating the preferences based on war level
+	[true] call A3A_fnc_updatePreference;
+
 	clearMagazineCargoGlobal boxX;
 	clearWeaponCargoGlobal boxX;
 	clearItemCargoGlobal boxX;

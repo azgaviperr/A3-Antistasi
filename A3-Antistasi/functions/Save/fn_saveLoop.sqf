@@ -62,13 +62,13 @@ private _destroyedPositions = destroyedBuildings apply { getPosATL _x };
 
 private ["_hrBackground","_resourcesBackground","_veh","_typeVehX","_weaponsX","_ammunition","_items","_backpcks","_containers","_arrayEst","_posVeh","_dierVeh","_prestigeOPFOR","_prestigeBLUFOR","_city","_dataX","_markersX","_garrison","_arrayMrkMF","_arrayOutpostsFIA","_positionOutpost","_typeMine","_posMine","_detected","_typesX","_exists","_friendX"];
 
-_hrBackground = (server getVariable "hr") + ({(alive _x) and (not isPlayer _x) and (_x getVariable ["spawner",false]) and ((group _x in (hcAllGroups theBoss) or (isPlayer (leader _x))) and (side group _x == teamPlayer))} count allUnits);
+_hrBackground = (server getVariable "hr") + ({(alive _x) and (not isPlayer _x) and ((group _x in (hcAllGroups theBoss) or (isPlayer (leader _x))) and (side group _x == teamPlayer))} count allUnits);
 _resourcesBackground = server getVariable "resourcesFIA";
 _vehInGarage = [];
 _vehInGarage = _vehInGarage + vehInGarage;
 {
 	_friendX = _x;
-	if ((_friendX getVariable ["spawner",false]) and (side group _friendX == teamPlayer))then {
+	if (side group _friendX == teamPlayers)then {
 		if ((alive _friendX) and (!isPlayer _friendX)) then {
 			if (((isPlayer leader _friendX) and (!isMultiplayer)) or (group _friendX in (hcAllGroups theBoss)) and (not((group _friendX) getVariable ["esNATO",false]))) then {
 				_resourcesBackground = _resourcesBackground + (server getVariable [(typeOf _friendX),0]);
@@ -145,21 +145,20 @@ _prestigeBLUFOR = [];
 ["prestigeOPFOR", _prestigeOPFOR] call A3A_fnc_setStatVariable;
 ["prestigeBLUFOR", _prestigeBLUFOR] call A3A_fnc_setStatVariable;
 
-_markersX = markersX - outpostsFIA - controlsX;
-_garrison = [];
-_wurzelGarrison = [];
-
+private _wurzelGarrison = [];
 {
-	_garrison pushBack [_x,garrison getVariable [_x,[]]];
-	_wurzelGarrison pushBack [
+	_wurzelGarrison pushBack
+    [
 		_x,
 		garrison getVariable [format ["%1_garrison",_x], []],
 	 	garrison getVariable [format ["%1_requested",_x], []],
-		garrison getVariable [format ["%1_over", _x], []]
+		garrison getVariable [format ["%1_over", _x], []],
+        garrison getVariable [format ["%1_patrols", _x], []],
+        garrison getVariable [format ["%1_statics", _x], []],
+        garrison getVariable [format ["%1_locked", _x], []]
 	];
-} forEach _markersX;
+} forEach (markersX - controlsX);
 
-["garrison",_garrison] call A3A_fnc_setStatVariable;
 ["wurzelGarrison", _wurzelGarrison] call A3A_fnc_setStatVariable;
 ["usesWurzelGarrison", true] call A3A_fnc_setStatVariable;
 

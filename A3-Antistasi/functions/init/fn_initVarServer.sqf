@@ -66,15 +66,6 @@ DECLARE_SERVER_VAR(attackPos, []);
 DECLARE_SERVER_VAR(attackMrk, []);
 DECLARE_SERVER_VAR(airstrike, []);
 
-//Variables used for the internal support system
-DECLARE_SERVER_VAR(occupantsSupports, []);
-DECLARE_SERVER_VAR(invadersSupports, []);
-
-DECLARE_SERVER_VAR(supportTargetsChanging, false);
-
-DECLARE_SERVER_VAR(occupantsRadioKeys, 0);
-DECLARE_SERVER_VAR(invaderRadioKeys, 0);
-
 //Vehicles currently in the garage
 DECLARE_SERVER_VAR(vehInGarage, []);
 
@@ -145,7 +136,7 @@ destroyedBuildings = [];		// synced only on join, to avoid spam on change
 ///////////////////////////////////////////
 //     INITIALISING ITEM CATEGORIES     ///
 ///////////////////////////////////////////
-[2,"Initialising item categories",__FILE__] call A3A_fnc_log;
+[2,"Initialising item categories",_fileName] call A3A_fnc_log;
 
 //We initialise a LOT of arrays based on the categories. Every category gets a 'allX' variables and an 'unlockedX' variable.
 
@@ -501,7 +492,7 @@ private _fnc_vehicleIsValid = {
 	params ["_type"];
 	private _configClass = configFile >> "CfgVehicles" >> _type;
 	if !(isClass _configClass) exitWith {
-		[1, format ["Vehicle class %1 not found", _type], _filename] call A3A_fnc_log;
+		[1, format ["Vehicle class %1 not found", _type], _filename] call A3A_fnc_Log;
 		false;
 	};
 	if (_configClass call A3A_fnc_getModOfConfigClass in disabledMods) then {false} else {true};
@@ -728,14 +719,15 @@ server setVariable [vehSDKTruck,300,true];											//300
 [2,"Initialising Garrison Variables",_fileName] call A3A_fnc_log;
 
 tierPreference = 1;
-cityUpdateTiers = [4, 8];
-cityStaticsTiers = [0.2, 1];
-airportUpdateTiers = [3, 6, 8];
-airportStaticsTiers = [0.5, 0.75, 1];
-outpostUpdateTiers = [4, 7, 9];
-outpostStaticsTiers = [0.4, 0.7, 1];
-otherUpdateTiers = [3, 7];
-otherStaticsTiers = [0.3, 1];
+cityUpdateTiers = [3, 5, 8, 10];
+//No statics for cities currently
+cityStaticsTiers = [0, 0, 0, 0];
+airportUpdateTiers = [2, 4, 6, 8, 10];
+airportStaticsTiers = [0.5, 0.75, 0.95, 1, 1];
+outpostUpdateTiers = [3, 5, 7, 9, 10];
+outpostStaticsTiers = [0.4, 0.6, 0.8, 1, 1];
+otherUpdateTiers = [3, 5, 7, 10];
+otherStaticsTiers = [0.3, 0.8, 0.95, 1];
 [] call A3A_fnc_initPreference;
 
 ////////////////////////////
@@ -744,8 +736,8 @@ otherStaticsTiers = [0.3, 1];
 [2,"Initialising Reinforcement Variables",_fileName] call A3A_fnc_log;
 DECLARE_SERVER_VAR(reinforceMarkerOccupants, []);
 DECLARE_SERVER_VAR(reinforceMarkerInvader, []);
-DECLARE_SERVER_VAR(canReinforceOccupants, []);
-DECLARE_SERVER_VAR(canReinforceInvader, []);
+DECLARE_SERVER_VAR(canReinforceOccupants, ["NATO_carrier"]);
+DECLARE_SERVER_VAR(canReinforceInvader, ["CSAT_carrier"]);
 
 /////////////////////////////////////////
 //     SYNCHRONISE SERVER VARIABLES   ///

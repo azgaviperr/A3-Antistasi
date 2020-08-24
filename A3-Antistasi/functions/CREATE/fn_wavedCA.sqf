@@ -65,7 +65,7 @@ _nameDest = [_mrkDestination] call A3A_fnc_localizar;
 
 // Use fixed aggro value for non-rebel targets for the moment
 private _aggro = if (_sideX == Occupants) then {aggressionOccupants} else {aggressionInvaders};
-if !(_isSDK) then {_aggro = 100 - _aggro;};
+if !(_isSDK) then { _aggro = 60 };
 
 _timeX = time + 3600;
 
@@ -611,7 +611,7 @@ while {(_waves > 0)} do
 					else
 						{
 						{_x disableAI "TARGET"; _x disableAI "AUTOTARGET"} foreach units _groupVeh;
-						if ((_typeVehX in vehFastRope) and ((count(garrison getVariable [_mrkDestination, []])) < 10)) then
+						if (_typeVehX in vehFastRope) then
 							{
 							//_grupo setVariable ["mrkAttack",_mrkDestination];
 							[_veh,_grupo,_posDestination,_posOrigin,_groupVeh] spawn A3A_fnc_fastrope;
@@ -639,17 +639,28 @@ while {(_waves > 0)} do
 		{
 		if (((not(_mrkDestination in outposts)) and (not(_mrkDestination in seaports)) and (_mrkOrigin != "NATO_carrier")) or hasIFA) then
 			{
-            private _reveal = [getMarkerPos _mrkDestination, _sideX] call A3A_fnc_calculateSupportCallReveal;
-            [getMarkerPos _mrkDestination, 4, ["MORTAR"], _sideX, _reveal] remoteExec ["A3A_fnc_sendSupport", 2];
+			[_mrkOrigin,_mrkDestination,_sideX] spawn A3A_fnc_artillery;
+			diag_log "Antistasi: Arty Spawned";
 			if (([_plane] call A3A_fnc_vehAvailable) and (not(_mrkDestination in citiesX)) and _firstWave) then
 				{
 				sleep 60;
 				_rnd = if (_mrkDestination in airportsX) then {round random 4} else {round random 2};
+				private _bombOptions = if (napalmEnabled) then {["HE","CLUSTER","NAPALM"]} else {["HE","CLUSTER"]};
 				for "_i" from 0 to _rnd do
 					{
-                        private _reveal = [getMarkerPos _mrkDestination, _sideX] call A3A_fnc_calculateSupportCallReveal;
-                        [getMarkerPos _mrkDestination, 4, ["AIRSTRIKE"], _sideX, _reveal] remoteExec ["A3A_fnc_sendSupport", 2];
-                        sleep 30;
+					if ([_plane] call A3A_fnc_vehAvailable) then
+						{
+						diag_log "Antistasi: Airstrike Spawned";
+						if (_i == 0 && {_mrkDestination in airportsX}) then
+							{
+							_nul = [_mrkDestination,_sideX,"HE"] spawn A3A_fnc_airstrike;
+							}
+						else
+							{
+							_nul = [_mrkDestination,_sideX,selectRandom _bombOptions] spawn A3A_fnc_airstrike;
+							};
+						sleep 30;
+						};
 					};
 				};
 			};
@@ -658,18 +669,27 @@ while {(_waves > 0)} do
 		{
 		if (((not(_mrkDestination in resourcesX)) and (not(_mrkDestination in seaports)) and (_mrkOrigin != "CSAT_carrier")) or hasIFA) then
 			{
-                private _reveal = [getMarkerPos _mrkDestination, _sideX] call A3A_fnc_calculateSupportCallReveal;
-                    [getMarkerPos _mrkDestination, 4, ["MORTAR"], _sideX, _reveal] remoteExec ["A3A_fnc_sendSupport", 2];
+			if !(_posOriginLand isEqualTo []) then {[_posOriginLand,_mrkDestination,_sideX] spawn A3A_fnc_artillery} else {[_mrkOrigin,_mrkDestination,_sideX] spawn A3A_fnc_artillery};
+			diag_log "Antistasi: Arty Spawned";
 			if (([_plane] call A3A_fnc_vehAvailable) and (_firstWave)) then
 				{
 				sleep 60;
 				_rnd = if (_mrkDestination in airportsX) then {if ({sidesX getVariable [_x,sideUnknown] == Invaders} count airportsX == 1) then {8} else {round random 4}} else {round random 2};
+				private _bombOptions = if (napalmEnabled) then {["HE","CLUSTER","NAPALM"]} else {["HE","CLUSTER"]};
 				for "_i" from 0 to _rnd do
 					{
 					if ([_plane] call A3A_fnc_vehAvailable) then
 						{
-                            private _reveal = [getMarkerPos _mrkDestination, _sideX] call A3A_fnc_calculateSupportCallReveal;
-                            [getMarkerPos _mrkDestination, 4, ["AIRSTRIKE"], _sideX, _reveal] remoteExec ["A3A_fnc_sendSupport", 2];
+						diag_log "Antistasi: Airstrike Spawned";
+						if (_i == 0 && {_mrkDestination in airportsX}) then
+							{
+							_nul = [_mrkDestination,_sideX,"HE"] spawn A3A_fnc_airstrike;
+							}
+						else
+							{
+							_nul = [_posDestination,_sideX,selectRandom _bombOptions] spawn A3A_fnc_airstrike;
+							};
+						sleep 30;
 						};
 					};
 				};
@@ -697,49 +717,15 @@ while {(_waves > 0)} do
 			["rebelAttack",[format ["%2 Is attacking from the %1. Intercept them or we may loose a sector",_nameOrigin,_nameENY],format ["%1 Attack",_nameENY],_mrkOrigin],getMarkerPos _mrkOrigin,"FAILED"] call A3A_fnc_taskUpdate;
 			["rebelAttackPVP",[format ["We are attacking an %2 from the %1. Help the operation if you can",_nameOrigin,_nameDest],format ["%1 Attack",_nameENY],_mrkDestination],getMarkerPos _mrkDestination,"SUCEEDED"] call A3A_fnc_taskUpdate;
 			if (_mrkDestination in citiesX) then
-			{
-                //Impact the support on other cities in the area
-                //They cant defend us, switch back to NATO
-                {
-                    if(_x != _mrkDestination) then
-                    {
-                        private _distance = (getMarkerPos _mrkDestination) distance2D (getMarkerPos _x);
-                        private _supportChange = [0, 0];
-                        if(_distance < 2500) then
-                        {
-                            _supportChange = [0, -10];
-                        };
-                        if(_distance < 2000) then
-                        {
-                            _supportChange = [10, -30];
-                        };
-                        if(_distance < 1500) then
-                        {
-                            _supportChange = [25, -50];
-                        };
-                        if(_distance < 1000) then
-                        {
-                            _supportChange = [50, -75];
-                        };
-                        if(_distance < 500) then
-                        {
-                            _supportChange = [75, -75];
-                        };
-                        if(_distance < 2500) then
-                        {
-                            _supportChange pushBack _x;
-                            _supportChange remoteExec ["A3A_fnc_citySupportChange",2];
-                        };
-                    };
-                } forEach citiesX;
-				[100,-100,_mrkDestination] remoteExec ["A3A_fnc_citySupportChange",2];
+				{
+				[0,-100,_mrkDestination] remoteExec ["A3A_fnc_citySupportChange",2];
 				["TaskFailed", ["", format ["%1 joined %2",[_mrkDestination, false] call A3A_fnc_location,nameOccupants]]] remoteExec ["BIS_fnc_showNotification",teamPlayer];
 				sidesX setVariable [_mrkDestination,Occupants,true];
 				[[-10, 45], [0, 0]] remoteExec ["A3A_fnc_prestige",2];
 				_mrkD = format ["Dum%1",_mrkDestination];
 				_mrkD setMarkerColor colorOccupants;
-				garrison setVariable [_mrkDestination,[],true];
-			};
+                [_mrkDestination, Occupants] call A3A_fnc_clearGarrison;
+				};
 			};
 		sleep 10;
 		if (!(sidesX getVariable [_mrkDestination,sideUnknown] == Occupants)) then
@@ -822,7 +808,7 @@ _nul = [0,"rebelAttackPVP"] spawn A3A_fnc_deleteTask;
 bigAttackInProgress = false; publicVariable "bigAttackInProgress";
 //forcedSpawn = forcedSpawn - _forced; publicVariable "forcedSpawn";
 forcedSpawn = forcedSpawn - [_mrkDestination]; publicVariable "forcedSpawn";
-[3600, _sideX] remoteExec ["A3A_fnc_timingCA", 2];
+[3600, _sideX] remoteExec ["A3A_fnc_timingCA",2];
 
 
 // Hand remaining aggressor units to the group despawner

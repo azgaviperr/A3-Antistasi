@@ -27,49 +27,6 @@ if (_type == "Fin_random_F") exitWith {};
 _unit addEventHandler ["HandleDamage", A3A_fnc_handleDamageAAF];
 _unit addEventHandler ["killed", A3A_fnc_occupantInvaderUnitKilledEH];
 
-if !(isNil "_isSpawner") then 
-{
-    if (_isSpawner) then { _unit setVariable ["spawner",true,true] };	
-}
-else
-{
-    private _veh = objectParent _unit;
-    if (_marker != "") exitWith 
-    {
-        // Persistent garrison units are never spawners.
-	    _unit setVariable ["markerX",_marker,true];
-	    if ((spawner getVariable _marker != 0) && (isNull _veh)) then
-	    {
-            // Garrison drifted out of spawn range, disable simulation on foot units
-            // this is re-enabled in distance.sqf when spawn range is re-entered
-            [_unit,false] remoteExec ["enableSimulationGlobal",2];
-        };
-    };
-
-    if (_unit in (assignedCargo _veh)) exitWith
-    {
-        // Cargo units aren't spawners until they leave the vehicle.
-        // Assumes that they'll get out if the crew are murdered.
-        _unit addEventHandler
-        [
-            "GetOutMan",
-            {
-                _unit = _this select 0;
-                if !(_unit getVariable ["surrendered", false]) then {
-                    _unit setVariable ["spawner",true,true];
-                };
-            }
-        ];
-    };
-
-	// Fixed-wing aircraft spawn far too much with little effect.
-	// Don't even spawn if ejected, because they often end up miles away from the real action
-	if (_veh isKindOf "Plane") exitWith {};
-
-    // Everyone else is a spawner
-	_unit setVariable ["spawner",true,true]
-};
-
 //Calculates the skill of the given unit
 private _skill = (0.15 + (0.02 * difficultyCoef) + (0.01 * tierWar)) * skillMult;
 if (faction _unit isEqualTo factionFIA) then
@@ -105,7 +62,7 @@ if (_type in squadLeaders) then
 {
     _unit setskill ["courage",_skill + 0.2];
     _unit setskill ["commanding",_skill + 0.2];
-    private _hasIntel = ((random 100) < 80);
+    private _hasIntel = ((random 100) < 40);
     _unit setVariable ["hasIntel", _hasIntel, true];
     _unit setVariable ["side", _side, true];
     [_unit, "Intel_Small"] remoteExec ["A3A_fnc_flagaction",[teamPlayer,civilian], _unit];

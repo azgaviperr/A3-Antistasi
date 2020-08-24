@@ -211,16 +211,7 @@ class FSM
                          "_wp1 setWaypointType ""TR UNLOAD"";" \n
                          "_wp1 setWaypointStatements [""true"", ""(vehicle this) land 'GET OUT';""];" \n
                          "_wp1 setWaypointBehaviour ""CARELESS"";" \n
-                         "_crewGroup setCurrentWaypoint _wp1;		// otherwise it's still on the previous waypoint" \n
-                         "" \n
-                         "// Move cargo group towards centre of outpost" \n
-                         "if (_cargoGroup != grpNull) then {" \n
-                         "	{ unassignVehicle _x } forEach units _cargoGroup;" \n
-                         "	private _wp2 = _cargoGroup addWaypoint [_destPos, 10];" \n
-                         "	_wp2 setWaypointType ""MOVE"";" \n
-                         "	_wp2 setWaypointStatements [""true"", ""(group this) spawn A3A_fnc_attackDrillAI;""];" \n
-                         "	_cargoGroup setCurrentWaypoint _wp2;" \n
-                         "};"/*%FSM</STATEINIT""">*/;
+                         "_crewGroup setCurrentWaypoint _wp1;		// otherwise it's still on the previous waypoint" /*%FSM</STATEINIT""">*/;
                         precondition = /*%FSM<STATEPRECONDITION""">*/""/*%FSM</STATEPRECONDITION""">*/;
                         class Links
                         {
@@ -305,19 +296,7 @@ class FSM
                          "if (_convoyType isEqualTo ""reinforce"" && (side _cargoGroup == sidesX getVariable _markers#1)) then {" \n
                          "" \n
                          "	// add units to garrison immediately, otherwise it'll keep sending them" \n
-                         "	private _unitTypes = [];" \n
-                         "	{ _unitTypes pushBack (typeOf _x) } foreach units _cargoGroup;" \n
-                         "	[_markers # 1, [["""", [], _unitTypes]]] call A3A_fnc_addGarrison;" \n
-                         "" \n
-                         "	// synchronize despawning with the target marker" \n
-                         "	// remove this once addGarrison takes control of the units" \n
-                         "	[_cargoGroup, _markers # 1] spawn {" \n
-                         "		params[""_cargo"", ""_marker""];" \n
-                         "		[3, ""Entering garrison reinf despawn loop"", ""ConvoyTravelAir""] call A3A_fnc_log;" \n
-                         "		waitUntil {sleep 5; (spawner getVariable _marker == 2)};" \n
-                         "		{ deleteVehicle _x } forEach units _cargo;" \n
-                         "		deleteGroup _cargo;" \n
-                         "	};" \n
+                         "	[_markers # 1, [["""", [], (units _cargoGroup)]], side _cargoGroup] call A3A_fnc_addSpawnedToGarrison;" \n
                          "}" \n
                          "else { [_cargoGroup] spawn A3A_fnc_groupDespawner; };" \n
                          "" \n

@@ -68,7 +68,7 @@ switch _typeX do
 
             _actionX = _flag addAction [format ["<t>Carry %1</t> <img image='\A3\ui_f\data\igui\cfg\actions\take_ca.paa' size='1.6' shadow=2 />",name _flag], A3A_fnc_carry,nil,5,true,false,"","(isPlayer _this) and (_this == _this getVariable ['owner',objNull]) and (isNull attachedTo _target) and !(_this getVariable [""helping"",false]);",4];
             _flag setUserActionText [_actionX,format ["Carry %1",name _flag],"<t size='2'><img image='\A3\ui_f\data\igui\cfg\actions\take_ca.paa'/></t>"];
-            [_flag] call A3A_fnc_logistics_addLoadAction;
+            [_flag] call jn_fnc_logistics_addActionLoad;
         };
     };
     case "moveS":
@@ -82,8 +82,8 @@ switch _typeX do
             if (isNil "actionX") then
             {
                 removeAllActions _flag;
+                _flag setVariable ["switchActionID", -1, true];
                 if (player == player getVariable ["owner",player]) then {[] call SA_Add_Player_Tow_Actions};
-                call A3A_fnc_initLootToCrate;
             }
             else
             {
@@ -93,6 +93,7 @@ switch _typeX do
         else
         {
             removeAllActions _flag;
+            _flag setVariable ["switchActionID", -1, true];
         };
     };
     case "refugee":
@@ -117,6 +118,10 @@ switch _typeX do
     case "seaport":
     {
         _flag addAction ["Buy Boat", {[vehSDKBoat] spawn A3A_fnc_addFIAVeh},nil,0,false,true,"","(isPlayer _this) and (_this == _this getVariable ['owner',objNull])",4]
+    };
+    case "steal":
+    {
+        _flag addAction ["Steal Static", A3A_fnc_stealStatic,nil,0,false,true,"","(isPlayer _this) and (_this == _this getVariable ['owner',objNull])",4]
     };
     case "garage":
     {
@@ -163,5 +168,14 @@ switch _typeX do
     case "Intel_Large":
     {
         _flag addAction ["Download Intel", A3A_fnc_searchIntelOnLaptop, nil, 4, true, false, "", "isPlayer _this", 4];
+    };
+    case "SwitchGunner":
+    {
+        private _actionID = _flag addAction ["Switch to gunner", A3A_fnc_switchToGunner, nil, 4, true, false, "", "isPlayer _this", 4];
+        _flag setVariable ["switchActionID", _actionID, true];
+    };
+    default
+    {
+        [1, format ["Unknown parameter given: %1", _typeX], "flagAction", true] call A3A_fnc_log;
     };
 };

@@ -147,6 +147,9 @@ if (_varName in specialVarLoads) then {
 			garrison setVariable [format ["%1_garrison", (_x select 0)], _x select 1, true];
 			garrison setVariable [format ["%1_requested", (_x select 0)], _x select 2, true];
 			garrison setVariable [format ["%1_over", (_x select 0)], _x select 3, true];
+            garrison setVariable [format ["%1_patrols", (_x select 0)], _x select 4, true];
+            garrison setVariable [format ["%1_statics", (_x select 0)], _x select 5, true];
+            garrison setVariable [format ["%1_locked", (_x select 0)], _x select 6, true];
 			[(_x select 0)] call A3A_fnc_updateReinfState;
 		} forEach _varvalue;
 	};
@@ -289,14 +292,7 @@ if (_varName in specialVarLoads) then {
 	if (_varname == 'tasks') then {
 		{
 			if (_x == "rebelAttack") then {
-                if(attackCountdownInvaders > attackCountdownOccupants) then
-                {
-                    [Invaders] spawn A3A_fnc_rebelAttack;
-                }
-                else
-                {
-                    [Occupants] spawn A3A_fnc_rebelAttack;
-                };
+				[] call A3A_fnc_rebelAttack;
 			} else {
 				if (_x == "DEF_HQ") then {
 					[] spawn A3A_fnc_attackHQ;

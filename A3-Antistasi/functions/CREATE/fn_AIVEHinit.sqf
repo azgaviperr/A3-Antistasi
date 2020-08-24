@@ -101,52 +101,19 @@ else
 	}
 	else
 	{
-		if (_veh isKindOf "StaticWeapon") then
+		if ((_typeX in vehAA) or (_typeX in vehMRLS)) then
 		{
-			[_veh] call A3A_fnc_logistics_addLoadAction;
-			_veh setCenterOfMass [(getCenterOfMass _veh) vectorAdd [0, 0, -1], 0];
-			if ((not (_veh in staticsToSave)) and (side gunner _veh != teamPlayer)) then
+			_veh addEventHandler ["killed",
 			{
-				if (activeGREF and ((_typeX == staticATteamPlayer) or (_typeX == staticAAteamPlayer))) then {[_veh,"moveS"] remoteExec ["A3A_fnc_flagaction",[teamPlayer,civilian],_veh]};
-			};
-			if (_typeX == SDKMortar) then
-			{
-				_veh addEventHandler ["Fired",
+				private ["_veh","_typeX"];
+				_veh = _this select 0;
+				_typeX = typeOf _veh;
+				if (side (_this select 1) == teamPlayer) then
 				{
-					_mortarX = _this select 0;
-					_dataX = _mortarX getVariable ["detection",[position _mortarX,0]];
-					_positionX = position _mortarX;
-					_chance = _dataX select 1;
-					if ((_positionX distance (_dataX select 0)) < 300) then
-					{
-						_chance = _chance + 2;
-					}
-					else
-					{
-						_chance = 0;
-					};
-					if (random 100 < _chance) then
-					{
-						{if ((side _x == Occupants) or (side _x == Invaders)) then {_x reveal [_mortarX,4]}} forEach allUnits;
-						if (_mortarX distance posHQ < 300) then
-						{
-							if (!(["DEF_HQ"] call BIS_fnc_taskExists)) then
-							{
-								_LeaderX = leader (gunner _mortarX);
-								if (!isPlayer _LeaderX) then
-								{
-									[[],"A3A_fnc_attackHQ"] remoteExec ["A3A_fnc_scheduler",2];
-								}
-								else
-								{
-									if ([_LeaderX] call A3A_fnc_isMember) then {[[],"A3A_fnc_attackHQ"] remoteExec ["A3A_fnc_scheduler",2]};
-								};
-							};
-						};
-					};
-					_mortarX setVariable ["detection",[_positionX,_chance]];
-				}];
-			};
+					if (_typeX == vehNATOAA) then {[-5,5,position (_veh)] remoteExec ["A3A_fnc_citySupportChange",2]};
+				};
+				_typeX call A3A_fnc_removeVehFromPool;
+			}];
 		};
 	};
 };
@@ -187,22 +154,6 @@ if (_side != teamPlayer) then
 		};
 		_veh removeEventHandler ["GetIn", _thisEventHandler];
 	}];
-};
-
-if(_veh isKindOf "Air") then
-{
-    //Start airspace control script if rebel player enters
-    _veh addEventHandler
-    [
-        "GetIn",
-        {
-            params ["_veh", "_role", "_unit"];
-            if((side (group _unit) == teamPlayer) && {isPlayer _unit}) then
-            {
-                [_veh] spawn A3A_fnc_airspaceControl;
-            };
-        }
-    ];
 };
 
 // Handler to prevent vehDespawner deleting vehicles for an hour after rebels exit them

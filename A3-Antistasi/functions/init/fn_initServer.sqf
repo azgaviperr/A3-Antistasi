@@ -45,8 +45,6 @@ if (isMultiplayer) then {
 	playerMarkersEnabled = ("pMarkers" call BIS_fnc_getParamValue == 1); publicVariable "playerMarkersEnabled";
 	minPlayersRequiredforPVP = "minPlayersRequiredforPVP" call BIS_fnc_getParamValue; publicVariable "minPlayersRequiredforPVP";
 	helmetLossChance = "helmetLossChance" call BIS_fnc_getParamValue; publicVariable "helmetLossChance";
-	LootToCrateEnabled = if ("EnableLootToCrate" call BIS_fnc_getParamValue == 1) then {true} else {false}; publicVariable "LootToCrateEnabled";
-	LTCLootUnlocked = if ("LTCLootUnlocked" call BIS_fnc_getParamValue == 1) then {true} else {false}; publicVariable "LTCLootUnlocked";
 } else {
 	[2, "Setting Singleplayer Params", _fileName] call A3A_fnc_log;
 	//These should be set in the set parameters dialog.
@@ -74,8 +72,6 @@ if (isMultiplayer) then {
 	playerMarkersEnabled = true;
 	minPlayersRequiredforPVP = 2;
 	helmetLossChance = 33;
-	LootToCrateEnabled = true;
-	LTCLootUnlocked = false;
     startWithLongRangeRadio = true;
 };
 
@@ -147,6 +143,7 @@ waitUntil {({(isPlayer _x) and (!isNull _x) and (_x == _x)} count allUnits) == (
 [] spawn A3A_fnc_modBlacklist;
 
 call A3A_fnc_initGarrisons;
+call A3A_fnc_initAmbientAnimations;
 
 if (loadLastSave) then {
 	[] call A3A_fnc_loadServer;
@@ -233,10 +230,9 @@ serverInitDone = true; publicVariable "serverInitDone";
 [2, "Waiting for HQ placement", _fileName] call A3A_fnc_log;
 waitUntil {sleep 1;!(isNil "placementDone")};
 [2, "HQ Placed, continuing init", _fileName] call A3A_fnc_log;
-distanceXs = [] spawn A3A_fnc_distance;
+[] spawn A3A_fnc_markerActiveUpdateLoop;
 [] spawn A3A_fnc_resourcecheck;
 [] spawn A3A_fnc_aggressionUpdateLoop;
-[] spawn A3A_fnc_initSupportCooldowns;
 [] execVM "Scripts\fn_advancedTowingInit.sqf";
 savingServer = false;
 

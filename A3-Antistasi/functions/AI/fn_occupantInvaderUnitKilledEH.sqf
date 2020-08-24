@@ -1,11 +1,5 @@
 params ["_victim", "_killer"];
 
-//Stops the unit from spawning things
-if (_victim getVariable ["spawner",false]) then
-{
-	_victim setVariable ["spawner",nil,true]
-};
-
 //Gather infos, trigger timed despawn
 private _victimGroup = group _victim;
 private _victimSide = side (group _victim);
@@ -85,26 +79,6 @@ else
 	else
 	{
 		[0.25,0,getPos _victim] remoteExec ["A3A_fnc_citySupportChange",2];
-	};
-};
-
-private _victimLocation = _victim getVariable "markerX";
-private _victimWasGarrison = true;
-if (isNil "_victimLocation") then
-{
-    _victimLocation = _victim getVariable ["originX",""];
-    _victimWasGarrison = false
-};
-
-if (_victimLocation != "") then
-{
-	if (sidesX getVariable [_victimLocation,sideUnknown] == _victimSide) then
-	{
-		[typeOf _victim,_victimSide,_victimLocation,-1] remoteExec ["A3A_fnc_garrisonUpdate",2];
-		if (_victimWasGarrison) then
-        {
-            [_victimLocation,_victimSide] remoteExec ["A3A_fnc_zoneCheck",2]
-        };
 	};
 };
 

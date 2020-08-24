@@ -53,7 +53,7 @@ for "_i" from 0 to (_markerNeeded - 1) do
 		_points = missionNamespace getVariable [(format ["%1/%2_data", _i, _j]), []];
 		_marker setMarkerText (format ["%1/%2, NavPoints: %3", _i, _j, count _points]);
 		_marker setMarkerAlpha 0;
-		
+
 		mainMarker pushBack "_marker";
 	};
 };

@@ -7,6 +7,7 @@ private ["_winner","_markerX","_looser","_positionX","_other","_flagX","_flagsX"
 _winner = _this select 0;
 _markerX = _this select 1;
 
+if(sidesX getVariable [_markerX, sideUnknown] == sideUnknown) exitWith {};
 [3, format ["Changing side of %1 to %2", _markerX, _winner], _fileName] call A3A_fnc_log;
 if ((_winner == teamPlayer) and (_markerX in airportsX) and (tierWar < 3)) exitWith {};
 if ((_winner == teamPlayer) and (sidesX getVariable [_markerX,sideUnknown] == teamPlayer)) exitWith {};
@@ -23,6 +24,68 @@ _prestigeOccupants = [0, 0];
 _prestigeInvaders = [0, 0];
 _flagX = objNull;
 _size = [_markerX] call A3A_fnc_sizeMarker;
+
+if(_markerX in controlsX) exitWith
+{
+    if(isOnRoad _positionX) then
+    {
+        [2, format ["Roadblock %1 destroyed by %2", _markerX, _winner], _fileName, true] call A3A_fnc_log;
+        ["TaskSucceeded", ["", "Roadblock destroyed"]] remoteExec ["BIS_fnc_showNotification",_winner];
+        ["TaskFailed", ["", "Roadblock lost"]] remoteExec ["BIS_fnc_showNotification",_looser];
+        if(_looser == Occupants) then
+        {
+            [-5, 0, getMarkerPos _markerX] remoteExec ["A3A_fnc_citySupportChange",2];
+        };
+        switch (_winner) do
+        {
+            case (teamPlayer):
+            {
+                sidesX setVariable [_markerX, nil, true];
+                [0,5,getMarkerPos _markerX] remoteExec ["A3A_fnc_citySupportChange",2];
+                [[_positionX,_looser,"",false],"A3A_fnc_patrolCA"] remoteExec ["A3A_fnc_scheduler",2];
+            };
+            case (Occupants):
+            {
+                sidesX setVariable [_markerX,Occupants,true];
+                [5,0,getMarkerPos _markerX] remoteExec ["A3A_fnc_citySupportChange",2];
+                [_markerX, _winner] call A3A_fnc_clearGarrison;
+            };
+            case (Invaders):
+            {
+                sidesX setVariable [_markerX,Invaders,true];
+                [_markerX, _winner] call A3A_fnc_clearGarrison;
+            };
+        };
+    }
+    else
+    {
+        [2, format ["Minefield %1 captured by %2", _markerX, _winner], _fileName, true] call A3A_fnc_log;
+        if(_looser == Occupants) then
+        {
+            [-5, 0, getMarkerPos _markerX] remoteExec ["A3A_fnc_citySupportChange",2];
+        };
+        switch (_winner) do
+        {
+            case (teamPlayer):
+            {
+                sidesX setVariable [_markerX,nil,true];
+                [0,5,getMarkerPos _markerX] remoteExec ["A3A_fnc_citySupportChange",2];
+                [[_positionX,_looser,"",false],"A3A_fnc_patrolCA"] remoteExec ["A3A_fnc_scheduler",2];
+            };
+            case (Occupants):
+            {
+                sidesX setVariable [_markerX,Occupants,true];
+                [5,0,getMarkerPos _markerX] remoteExec ["A3A_fnc_citySupportChange",2];
+                [_markerX, _winner] call A3A_fnc_clearGarrison;
+            };
+            case (Invaders):
+            {
+                sidesX setVariable [_markerX,Invaders,true];
+                [_markerX, _winner] call A3A_fnc_clearGarrison;
+            };
+        };
+    };
+};
 
 if ((!(_markerX in citiesX)) and (spawner getVariable _markerX != 2)) then
 	{
@@ -48,53 +111,22 @@ else
 		_textX = format ["%1 ",nameInvaders];
 		};
 	};
-garrison setVariable [_markerX,[],true];
 sidesX setVariable [_markerX,_winner,true];
 
 [3, format ["Side changed for %1", _markerX], _fileName] call A3A_fnc_log;
 
-//New garrison update ==========================================================
-garrison setVariable [format ["%1_garrison", _markerX], [], true];
-garrison setVariable [format ["%1_other", _markerX], [], true];
-garrison setVariable [format ["%1_requested", _markerX], [], true];
-//This system is not yet implemented
-//garrison setVariable [format ["%1_available", _markerX], [], true];
-//New system end ===============================================================
-
 if (_winner == teamPlayer) then
 {
 	_super = if (_markerX in airportsX) then {true} else {false};
-    //Disable guaranteed attacks on takeover, the units on the marker call support
-	//[[_markerX,_looser,"",_super],"A3A_fnc_patrolCA"] call A3A_fnc_scheduler;
+	[_markerX,_looser,"",_super] spawn A3A_fnc_patrolCA;
 	//sleep 15;
 	// Removed for the moment, old broken stuff
-//	[[_markerX],"A3A_fnc_autoGarrison"] call A3A_fnc_scheduler;
-}
-else
-{
-	_soldiers = [];
-	{_soldiers pushBack (typeOf _x)} forEach (allUnits select {(_x distance _positionX < (_size*3)) and (_x getVariable ["spawner",false]) and (side group _x == _winner) and (vehicle _x == _x) and (alive _x)});
-	[_soldiers,_winner,_markerX,0] remoteExec ["A3A_fnc_garrisonUpdate",2];
-
-	//New system =================================================================
-	private _type = "Other";
-	switch (true) do
-	{
-	    case (_markerX in airportsX): {_type = "Airport"};
-			case (_markerX in outposts): {_type = "Outpost"};
-			case (_markerX in citiesX): {_type = "City"};
-	};
-	private _preference = garrison getVariable (format ["%1_preference", _type]);
-	private _request = [];
-	for "_i" from 0 to ((count _preference) - 1) do
-	{
-		_request pushBack ([_preference select _i, _winner] call A3A_fnc_createGarrisonLine);
-	};
-	garrison setVariable [format ["%1_requested", _markerX], _request, true];
-	//End ========================================================================
+    //[[_markerX],"A3A_fnc_autoGarrison"] call A3A_fnc_scheduler;
 };
 
+[_markerX, _winner] call A3A_fnc_clearGarrison;
 [_markerX, [_looser, _winner]] call A3A_fnc_updateReinfState;
+garrison setVariable [format ["%1_recruit", _markerX], 0, true];
 [3, format ["Garrison set for %1", _markerX], _fileName] call A3A_fnc_log;
 
 
@@ -280,21 +312,13 @@ if (_markerX in resourcesX) then
 
 [3, format ["Notification and points done for marker change at %1", _markerX], _fileName] call A3A_fnc_log;
 
-{_nul = [_markerX,_x] spawn A3A_fnc_deleteControls} forEach controlsX;
+//Destroy roadblocks around it
+{
+    [_markerX, _x] spawn A3A_deleteControls;
+} forEach controlsX;
 if (_winner == teamPlayer) then
 {
 	[] call A3A_fnc_tierCheck;
-
-	//Convert all of the static weapons to teamPlayer, essentially. Make them mannable by AI.
-	//Make the size larger, as rarely does the marker cover the whole outpost.
-	private _staticWeapons = nearestObjects [_positionX, ["StaticWeapon"], _size * 1.5, true];
-	{
-		[_x, teamPlayer, true] call A3A_fnc_vehKilledOrCaptured;
-		if !(_x in staticsToSave) then {
-			staticsToSave pushBack _x;
-		};
-	} forEach _staticWeapons;
-	publicVariable "staticsToSave";
 
 	if (!isNull _flagX) then
 	{
@@ -309,7 +333,7 @@ if (_winner == teamPlayer) then
 		if (_markerX in seaports) then {[_flagX,"seaport"] remoteExec ["A3A_fnc_flagaction",[teamPlayer,civilian],_flagX]};
 	};
 	[_prestigeOccupants,_prestigeInvaders] spawn A3A_fnc_prestige;
-	waitUntil {sleep 1; ((spawner getVariable _markerX == 2)) or ({((side group _x) in [_looser,_other]) and (_x getVariable ["spawner",false]) and ([_x,_markerX] call A3A_fnc_canConquer)} count allUnits > 3*({(side _x == teamPlayer) and ([_x,_markerX] call A3A_fnc_canConquer)} count allUnits))};
+	waitUntil {sleep 1; ((spawner getVariable _markerX == 2)) or ({((side group _x) in [_looser,_other]) and ([_x,_markerX] call A3A_fnc_canConquer)} count allUnits > 3*({(side _x == teamPlayer) and ([_x,_markerX] call A3A_fnc_canConquer)} count allUnits))};
 	if (spawner getVariable _markerX != 2) then
 	{
 		sleep 10;
@@ -318,13 +342,6 @@ if (_winner == teamPlayer) then
 }
 else
 	{
-	//Remove static weapons near the marker from the saved statics array
-	private _staticWeapons = nearestObjects [_positionX, ["StaticWeapon"], _size * 1.5, true];
-	staticsToSave = staticsToSave - _staticWeapons;
-	publicVariable "staticsToSave";
-	{
-		[_x, _winner, true] call A3A_fnc_vehKilledOrCaptured;
-	} forEach _staticWeapons;
 
 	if (!isNull _flagX) then
 	{

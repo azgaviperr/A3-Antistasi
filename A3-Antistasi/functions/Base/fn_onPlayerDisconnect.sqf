@@ -16,7 +16,7 @@ private _realUnit = _unit getVariable ["owner", _unit];
 
 if (_realUnit == theBoss) then
 {
-	if (group petros == group _realUnit) then { [] spawn A3A_fnc_buildHQ }; 
+	if (group petros == group _realUnit) then { [] spawn A3A_fnc_buildHQ };
 
 	// Remove our real unit from boss
 	_realUnit setVariable ["eligible", false, true];
@@ -37,4 +37,3 @@ if (side group _unit == teamPlayer || side group _unit == sideUnknown) then
 // Preventing duping due to weapon loadout saves
 if (alive _realUnit && {!(_realUnit getVariable ["incapacitated", false])} ) then { deleteVehicle _realUnit }
 else { _realUnit setDamage 1 };			// finish off, if incapped
-

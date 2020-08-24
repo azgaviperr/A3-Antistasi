@@ -179,7 +179,7 @@ while {alive _veh} do
 		};
 	};
 
-{ 
+{
 	private _wp = _x addWaypoint [getMarkerPos _base, 50];
 	_wp setWaypointType "MOVE";
 	_x setCurrentWaypoint _wp;

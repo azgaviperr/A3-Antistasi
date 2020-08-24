@@ -116,8 +116,8 @@ if (_typeX == "DES") then
 	else
 		{
 		_siteX = selectRandom _potentials;
-		if (_siteX in airportsX) then {if (random 10 < 8) then {[[_siteX],"A3A_fnc_DES_Vehicle"] remoteExec ["A3A_fnc_scheduler",2]} else {[[_siteX],"A3A_fnc_DES_Heli"] remoteExec ["A3A_fnc_scheduler",2]}};
-//		if (_siteX in airportsX) then {[[_siteX],"A3A_fnc_DES_Vehicle"] remoteExec ["A3A_fnc_scheduler",2]};
+//		if (_siteX in airportsX) then {if (random 10 < 8) then {[[_siteX],"A3A_fnc_DES_Vehicle"] remoteExec ["A3A_fnc_scheduler",2]} else {[[_siteX],"A3A_fnc_DES_Heli"] remoteExec ["A3A_fnc_scheduler",2]}};
+		if (_siteX in airportsX) then {[[_siteX],"A3A_fnc_DES_Vehicle"] remoteExec ["A3A_fnc_scheduler",2]};
 		if (_siteX in antennas) then {[[_siteX],"DES_antenna"] remoteExec ["A3A_fnc_scheduler",2]}
 		};
 	};
@@ -216,7 +216,7 @@ if (_typeX == "CONVOY") then
 	{
 	if (!bigAttackInProgress) then
 		{
-		_sites = (airportsX + resourcesX + factories + seaports + outposts - blackListDest) + (citiesX select {count (garrison getVariable [_x,[]]) < 10});
+		_sites = (airportsX + resourcesX + factories + seaports + outposts - blackListDest) + (citiesX select {([[_x] call A3A_fnc_getOver, true] call A3A_fnc_countGarrison) > 10});
 		_sites = _sites select {(sidesX getVariable [_x,sideUnknown] != teamPlayer) and !(_x in blackListDest)};
 		if (count _sites > 0) then
 			{

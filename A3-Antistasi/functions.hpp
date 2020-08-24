@@ -1,6 +1,6 @@
 class A3A
 {
-	class init
+	class Init
 	{
 		//Main initialisation functions.
 		class initServer {};
@@ -9,11 +9,18 @@ class A3A
 		//Other initialisation functions (generally called by the above)
 		class cityinfo {};
 		class credits {};
+        class initAmbientAnimations {};
+        class initControlMarker {};
 		class initACEUnconsciousHandler {};
 		class initFuncs {};
 		class initGarrisons {};
 		class initGetMissionPath {};
 		class initSpawnPlaces {};
+        class initSpawnPlacesBuildings {};
+        class initSpawnPlacesHangars {};
+        class initSpawnPlacesHelipads {};
+        class initSpawnPlacesStatics {};
+        class initSpawnPlacesVehicles {};
 
 		class initVar {};
 		class initVarClient {};
@@ -34,13 +41,13 @@ class A3A
 		class addActionBreachVehicle {};
 		class addHC {};
 		class addTimeForIdle {};
+        class addTimeoutForUnit {};
         class aggressionUpdateLoop {};
 		class AILoadInfo {};
 		class rebelAttack {};
 		class blackout {};
 		class buildHQ {};
         class calculateAggression {};
-        class chooseAttackType {};
 		class citiesToCivPatrol {};
 		class citySupportChange {};
 		class commsMP {};
@@ -50,12 +57,10 @@ class A3A
 		class createPetros {};
 		class deleteControls {};
 		class destroyCity {};
-		class distance {};
 		class distanceUnits {};
 		class economicsAI {};
 		class ejectPvPPlayerIfInvalidVehicle {};
 		class FIAradio {};
-        class findBaseForQRF {};
 		class findBasesForConvoy {};
 		class findNearestGoodRoad {};
 		class flagaction {};
@@ -107,6 +112,7 @@ class A3A
 		class startBreachVehicle {};
 		class statistics {};
 		class stripGearFromLoadout {};
+        class switchToGunner {};
 		class teleportVehicleToBase {};
 		class timingCA {};
 		class translateVariable {};
@@ -120,6 +126,8 @@ class A3A
 		class airbomb {};
 		class airdrop {};
 		class AIreactOnKill {};
+		class airstrike {};
+		class artillery {};
 		class artySupport {};
 		class askHelp {};
 		class assaultBuilding {};
@@ -127,13 +135,10 @@ class A3A
 		class autoHealFnc {};
 		class autoLoot {};
 		class autoRearm {};
-        class callForSupport {};
 		class canConquer {};
 		class canFight {};
 		class captureX {};
 		class chargeWithSmoke {};
-        class chooseSupport {};
-        class combatLanding {};
 		class coverage {};
 		class destroyBuilding {};
 		class doFlank {};
@@ -153,6 +158,7 @@ class A3A
 		class liberatePOW {};
 		class mineSweep {};
 		class mortarDrill {};
+		class mortarSupport {};
 		class mortyAI {};
 		class napalm {};
 		class napalmDamage {};
@@ -160,6 +166,7 @@ class A3A
 		class rearmCall {};
 		class recallGroup {};
 		class smokeCoverAuto {};
+        class startAmbientAnims {};
 		class staticAutoT {};
 		class staticMGDrill {};
 		class suppressingFire {};
@@ -190,52 +197,32 @@ class A3A
 		class spawnConvoyLine {};
 	};
 
-	class CREATE
+	class Create
 	{
 		class AAFroadPatrol {};
 		class airportCanAttack {};
 		class AIVEHinit {};
 		class ambientCivs {};
-		class calculateMarkerArea {};
 		class cargoSeats {};
 		class CIVinit {};
 		class civVEHinit {};
 		class cleanserVeh {};
-		class createAIAirplane {};
-		class createAICities {};
 		class createAIcontrols {};
-		class createAIOutposts {};
-		class createAIResources {};
-		class createAISite {};
-        class createAttackVehicle {};
 		class createCIV {};
-		class createFIAOutposts2 {};
 		class createQRF {};
-		class createSDKGarrisons {};
 		class createSDKgarrisonsTemp {};
 		class createUnit {};
-        class createVehicleQRFBehaviour {};
-		class cycleSpawn {};
 		class FIAinitBases {};
-		class findSpawnPosition {};
-		class freeSpawnPositions {};
-		class garrisonReorg {};
-		class garrisonSize {};
-		class garrisonUpdate {};
-		class groupDespawner {};
 		class invaderPunish {};
-		class milBuildings {};
 		class minefieldAAF {};
 		class mortarPos {};
 		class NATOinit {};
-		class patrolReinf {};
+		class patrolCA {};
 		class reinforcementsAI {};
 		class remoteBattle {};
 		class removeVehFromPool {};
 		class safeVehicleSpawn {};
-        class singleAttack {};
 		class spawnGroup {};
-        class spawnVehicleAtMarker {};
 		class updateCAMark {};
 		class vehAvailable {};
 		class VEHdespawner {};
@@ -293,28 +280,49 @@ class A3A
 
 	class Garrison
 	{
-		class addGarrison {};
-		class addRequested {};
+        class addGarrisonLine {};
+        class addSpawnedToGarrison {};
+        class addStaticToGarrison {};
+		class addToGarrison {};
+        class addToOver {};
+		class addToRequested {};
+        class blockVehicleSpace {};
+        class canPlaceVehicleAtMarker {};
+        class checkForFreeSpaces {};
 		class checkGroupType {};
+        class checkReinfTypeForVehicle {};
 		class checkVehicleType {};
+        class clearGarrison {};
 		class countGarrison {};
 		class createGarrison {};
 		class createGarrisonLine {};
+        class createPatrolArray {};
 		class getGarrison {};
 		class getGarrisonRatio {};
 		class getGarrisonStatus {};
+        class getOver {};
+        class getPatrols {};
 		class getRequested {};
+        class getVehicleCost {};
 		class getVehicleCrew {};
 		class initPreference {};
+        class isStaticWeaponOnMarker {};
 		class logArray {};
+        class markerAlert {};
+        class removeFromOver {};
 		class replenishGarrison {};
+        class searchGarrisonForGroup {};
+        class searchGarrisonForVehicle {};
 		class selectGroupType {};
 		class selectReinfUnits {};
 		class selectVehicleType {};
 		class shouldReinforce {};
+        class unitAvailable {};
 		class updateGarrison {};
+        class updatePatrols {};
 		class updatePreference {};
 		class updateReinfState {};
+        class updateStatics {};
 		class updateVehicles {};
 	};
 
@@ -327,42 +335,6 @@ class A3A
         class searchIntelOnLeader {};
         class selectIntel {};
         class showIntel {};
-    };
-
-	class LTC
-	{
-		class canLoot {};
-		class canTransfer {};
-		class carryCrate {};
-		class initLootToCrate {};
-		class lootFromContainer {};
-		class lootToCrate {};
-		class spawnCrate {};
-	};
-
-	class Logistics
-    {
-        class logistics_addLoadAction {};
-        class logistics_initNodes {};
-    };
-
-    class LogisticsFunctions
-    {
-        file = "functions\Logistics\functions";
-        class logistics_addAction {};
-        class logistics_addOrRemoveObjectMass {};
-        class logistics_addWeaponAction {};
-        class logistics_canLoad {};
-        class logistics_generateNodes {};
-        class logistics_getCargoNodeType {};
-        class logistics_getCargoOffsetAndDir {};
-        class logistics_getVehicleNodes {};
-        class logistics_initMountedWeapon {};
-        class logistics_load {};
-        class logistics_refreshVehicleLoad {};
-        class logistics_removeWeaponAction {};
-        class logistics_toggleAceActions {};
-        class logistics_unload {};
     };
 
 	class Missions
@@ -390,11 +362,18 @@ class A3A
 		class underAttack {};
 	};
 
-	class ModsAndDLC {
+	class ModsAndDLC
+    {
 		class getModOfConfigClass {};
 		class initDisabledMods {};
 		class isModNameVanilla {};
 	};
+
+    class ObjectInits
+    {
+        class markerUnitInit {};
+        class markerVehicleInit {};
+    };
 
 	class Ammunition
 	{
@@ -478,13 +457,13 @@ class A3A
 		class punishment_notPlayer {};
 	};
 
-	class pvp
+	class PvP
 	{
 		class pvpCheck {};
 		class playerHasBeenPvPCheck {};
 	};
 
-	class REINF
+	class Reinf
 	{
 		class addBombRun {};
 		class addFIAsquadHC {};
@@ -509,6 +488,11 @@ class A3A
 		class vehiclePrice {};
 		class vehStats {};
 	};
+
+    class Reinforcements
+    {
+        class sendGroupToGarrison {};
+    };
 
 	class Revive
 	{
@@ -554,27 +538,40 @@ class A3A
 		class saveLoop {};
 	};
 
-    class Supports
+    class Spawn
     {
-        class addSupportTarget {};
-        class calculateSupportCallReveal {};
-        class clearTargetArea {};
-        class createSupport {};
-        class endSupport {};
-        class initSupportCooldowns {};
-        class sendSupport {};
-        class showInterceptedSetupCall {};
-        class showInterceptedSupportCall {};
-        class SUP_airstrike {};
-        class SUP_airstrikeAvailable {};
-        class SUP_airstrikeRoutine {};
-        class SUP_mortar {};
-        class SUP_mortarAvailable {};
-        class SUP_mortarRoutine {};
-        class SUP_QRF {};
-        class SUP_QRFAvailable {};
-        class SUP_QRFRoutine {};
-        class supportAvailable {};
+        class adaptMarkerSizeToUnitCount {};
+        class addToSpawnedArrays {};
+        class calculateMarkerArea {};
+        class createAISite {};
+        class createCity {};
+        class createControlPoint {};
+        class createSpawnPlacementForGroup {};
+        class cycleSpawn {};
+        class cycleSpawnPatrol {};
+        class cycleSpawnPatrolUnit {};
+        class cycleSpawnSoldierGroup {};
+        class cycleSpawnStatic {};
+        class cycleSpawnUnit {};
+        class cycleSpawnVehicle {};
+        class cycleSpawnVehicleCrew {};
+        class findSpawnPosition {};
+        class freeSpawnPosition {};
+        class freeSpawnPositions {};
+        class getSpawnedArray {};
+        class groupDespawner {};
+        class manStaticOnAssembly {};
+        class manStaticsOnArrival {};
+        class manStaticsOnSpawn {};
+        class markerActiveUpdateLoop {};
+        class markerDespawner {};
+        class needsSpawn {};
+        class removeFromSpawnedArrays {};
+        class shouldVehicleBeManned {};
+        class staticInit {};
+        class unitBehaviourOnArrival {};
+        class updateSpawnerUnits {};
+        class vehicleDespawner {};
     };
 
 	class Templates
@@ -603,6 +600,9 @@ class A3A
 		class createNamespace {};
 		class dateToTimeString {};
 		class generateRoadsDB {};
+        class getRealBuildingPos {};
+        class isBuildingPosValid {};
+        class isCombatVehicle {};
 		class log {};
 		class vehicleWillCollideAtPosition {};
 		class getRoadDirection {};

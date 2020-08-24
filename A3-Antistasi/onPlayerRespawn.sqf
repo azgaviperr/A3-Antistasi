@@ -50,8 +50,6 @@ if (side group player == teamPlayer) then
 	_newUnit setVariable ["compromised",0];
 	_newUnit setVariable ["eligible",_eligible,true];
 	_oldUnit setVariable ["eligible",false,true];
-	_newUnit setVariable ["spawner",true,true];
-	_oldUnit setVariable ["spawner",nil,true];
 	[_newUnit,false] remoteExec ["setCaptive",0,_newUnit];
 	_newUnit setCaptive false;
 	_newUnit setRank (_rankX);
@@ -236,12 +234,9 @@ if (side group player == teamPlayer) then
 	[true] spawn A3A_fnc_reinitY;
 	[player] execVM "OrgPlayers\unitTraits.sqf";
 	[] spawn A3A_fnc_statistics;
-	if (LootToCrateEnabled) then {call A3A_fnc_initLootToCrate};
 	}
 else
 	{
-	_oldUnit setVariable ["spawner",nil,true];
-	_newUnit setVariable ["spawner",true,true];
 	[player] call A3A_fnc_dress;
 	if (hasACE) then {[] call A3A_fnc_ACEpvpReDress};
 	};

@@ -104,7 +104,6 @@ _introShot = [
 membershipEnabled = if (isMultiplayer && "membership" call BIS_fnc_getParamValue == 1) then {true} else {false};
 
 disableUserInput false;
-player setVariable ["spawner",true,true];
 
 if (isMultiplayer && {playerMarkersEnabled}) then {
 	[] spawn A3A_fnc_playerMarkers;
@@ -268,35 +267,54 @@ player addEventHandler ["HandleHeal", {
 	};
 }];
 
-// notes:
-// Static weapon objects are persistent through assembly/disassembly
-// The bags are not persistent, object IDs change each time
-// Static weapon position seems to follow bag1, but it's not an attached object
-// Can use objectParent to identify backpack of static weapon
+player addEventHandler
+[
+    "WeaponAssembled",
+    {
+        params ["_unit", "_staticWeapon"];
+        //Is there any other kind of weapon that can be assembled?
+        if (_staticWeapon isKindOf "StaticWeapon") then
+        {
+            private _marker = [_staticWeapon] call A3A_fnc_isStaticWeaponOnMarker;
+            if (_marker != "") then
+            {
+                ["Static", format ["You deployed the static weapon at %1. If there are militia units stationated here, they will man this weapon shortly!", [_marker] call A3A_fnc_localizar]] call A3A_fnc_customHint;
+                [_staticWeapon, _marker] remoteExec ["A3A_fnc_addStaticToGarrison", 2];
 
-player addEventHandler ["WeaponAssembled", {
-	private _veh = _this select 1;
-	[_veh, teamPlayer] call A3A_fnc_AIVEHinit;		// will flip/capture if already initialized
-	if (_veh isKindOf "StaticWeapon") then {
-		if (not(_veh in staticsToSave)) then {
-			staticsToSave pushBack _veh;
-			publicVariable "staticsToSave";
-		};
-		_markersX = markersX select {sidesX getVariable [_x,sideUnknown] == teamPlayer};
-		_pos = position _veh;
-		[_veh] call A3A_fnc_logistics_addLoadAction;
-		if (_markersX findIf {_pos inArea _x} != -1) then {["Static Deployed", "Static weapon has been deployed for use in a nearby zone, and will be used by garrison militia if you leave it here the next time the zone spawns"] call A3A_fnc_customHint;};
-	};
-}];
+            }
+            else
+            {
+                [_staticWeapon] remoteExec ["A3A_fnc_AIVEHinit", 2];
+            };
+        }
+        else
+        {
+            _staticWeapon addEventHandler
+            [
+                "Killed",
+                {
+                    [_this select 0] remoteExec ["A3A_fnc_postmortem",2]
+                }
+            ];
+        };
+    }
+];
 
-player addEventHandler ["WeaponDisassembled", {
-	private _bag1 = _this select 1;
-	private _bag2 = _this select 2;
-	//_bag1 = objectParent (_this select 1);
-	//_bag2 = objectParent (_this select 2);
-	[_bag1] remoteExec ["A3A_fnc_postmortem", 2];
-	[_bag2] remoteExec ["A3A_fnc_postmortem", 2];
-}];
+player addEventHandler
+[
+    "WeaponDisassembled",
+    {
+        params ["_unit", "_backpack1", "_backpack2"];
+        [_backpack1] call A3A_fnc_AIVEHinit;
+        [_backpack2] call A3A_fnc_AIVEHinit;
+
+        private _closestMarker = [airportsX + outposts + resourcesX + factories + seaports + citiesX + ["Synd_HQ"], getPos _unit] call BIS_fnc_nearestPosition;
+        if((((getMarkerPos _closestMarker) distance2D _unit) < 250) || {(getPos _unit) inArea _closestMarker}) then
+        {
+            ["Static", format ["You just disassembled a static weapon at %1, it will no longer be used by the stationated garrison!", [_closestMarker] call A3A_fnc_localizar]] call A3A_fnc_customHint;
+        };
+    }
+];
 
 player addEventHandler ["GetInMan", {
 	private ["_unit","_veh"];
@@ -474,11 +492,6 @@ if (isMultiplayer) then {
 vehicleBox addAction ["Faction Garage", { [GARAGE_FACTION] spawn A3A_fnc_garage; },nil,0,false,true,"","(isPlayer _this) and (_this == _this getVariable ['owner',objNull]) and (side (group _this) == teamPlayer)", 4];
 vehicleBox addAction ["Buy Vehicle", {if ([player,300] call A3A_fnc_enemyNearCheck) then {["Purchase Vehicle", "You cannot buy vehicles while there are enemies near you"] call A3A_fnc_customHint;} else {nul = createDialog "vehicle_option"}},nil,0,false,true,"","(isPlayer _this) and (_this == _this getVariable ['owner',objNull]) and (side (group _this) == teamPlayer)", 4];
 vehicleBox addAction ["Move this asset", A3A_fnc_moveHQObject,nil,0,false,true,"","(_this == theBoss)", 4];
-
-if (LootToCrateEnabled) then {
-	vehicleBox addAction ["Buy loot box for 10€", {player call A3A_fnc_spawnCrate},nil,0,false,true,"","true", 4];
-	call A3A_fnc_initLootToCrate;
-};
 
 fireX allowDamage false;
 [fireX, "fireX"] call A3A_fnc_flagaction;
